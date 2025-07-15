@@ -4,6 +4,8 @@ import { generateTokenandSetCookie } from '../lib/utils/generateToken.js';
 
 export const signup = async (req, res) => {
   try {
+	console.error('Error in Signup Controller:', error.message);
+
     const { username, fullName, password, email } = req.body;
 
     if (!username || !fullName || !password || !email) {
