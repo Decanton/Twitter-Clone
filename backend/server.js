@@ -7,6 +7,7 @@ import userRoutes from './routes/user.routes.js';
 import connectMongoDB from './db/connectMongoDB.js';
 import cookieParser from 'cookie-parser';
 import user from './models/user.model.js';
+import postRoutes from './routes/post.routes.js';
 
 dotenv.config();
 
@@ -27,6 +28,7 @@ app.use(cookieParser());
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/posts', postRoutes);
 
 
 
