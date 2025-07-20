@@ -3,10 +3,10 @@ import { useState } from "react";
 
 import XSvg from "../../../components/svgs/X";
 
-import { MdOutlineMail } from "react-icons/md";
+import { MdOutlineMail, MdPassword } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
-import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -23,35 +23,39 @@ const SignUpPage = () => {
 	const { mutate, isError, isPending, error } = useMutation({
 		mutationFn: async ({ email, username, fullName, password }) => {
 			try {
-				const res = await fetch("/api/auth/signup", {
+				const res = await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/auth/signup`, {
 					method: "POST",
 					headers: {
 						"Content-Type": "application/json",
 					},
 					body: JSON.stringify({ email, username, fullName, password }),
+					credentials: "include", // include cookies if backend uses them
 				});
 
-				const data = await res.json();
+				let data;
+				try {
+					data = await res.json();
+				} catch (jsonErr) {
+					const text = await res.text();
+					throw new Error(`Non-JSON response: ${text}`);
+				}
+
 				if (!res.ok) throw new Error(data.error || "Failed to create account");
-				console.log(data);
+
 				return data;
 			} catch (error) {
 				console.error(error);
-				throw error;
+				throw new Error(error.message || "Signup failed");
 			}
 		},
 		onSuccess: () => {
 			toast.success("Account created successfully");
-
-			{
-				/* Added this line below, after recording the video. I forgot to add this while recording, sorry, thx. */
-			}
 			queryClient.invalidateQueries({ queryKey: ["authUser"] });
 		},
 	});
 
 	const handleSubmit = (e) => {
-		e.preventDefault(); // page won't reload
+		e.preventDefault();
 		mutate(formData);
 	};
 
@@ -61,13 +65,15 @@ const SignUpPage = () => {
 
 	return (
 		<div className='max-w-screen-xl mx-auto flex h-screen px-10'>
-			<div className='flex-1 hidden lg:flex items-center  justify-center'>
+			<div className='flex-1 hidden lg:flex items-center justify-center'>
 				<XSvg className='lg:w-2/3 fill-white' />
 			</div>
+
 			<div className='flex-1 flex flex-col justify-center items-center'>
-				<form className='lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col' onSubmit={handleSubmit}>
+				<form className='lg:w-2/3 mx-auto md:mx-20 flex gap-4 flex-col' onSubmit={handleSubmit}>
 					<XSvg className='w-24 lg:hidden fill-white' />
 					<h1 className='text-4xl font-extrabold text-white'>Join today.</h1>
+
 					<label className='input input-bordered rounded flex items-center gap-2'>
 						<MdOutlineMail />
 						<input
@@ -79,18 +85,20 @@ const SignUpPage = () => {
 							value={formData.email}
 						/>
 					</label>
+
 					<div className='flex gap-4 flex-wrap'>
 						<label className='input input-bordered rounded flex items-center gap-2 flex-1'>
 							<FaUser />
 							<input
 								type='text'
-								className='grow '
+								className='grow'
 								placeholder='Username'
 								name='username'
 								onChange={handleInputChange}
 								value={formData.username}
 							/>
 						</label>
+
 						<label className='input input-bordered rounded flex items-center gap-2 flex-1'>
 							<MdDriveFileRenameOutline />
 							<input
@@ -103,6 +111,7 @@ const SignUpPage = () => {
 							/>
 						</label>
 					</div>
+
 					<label className='input input-bordered rounded flex items-center gap-2'>
 						<MdPassword />
 						<input
@@ -114,11 +123,14 @@ const SignUpPage = () => {
 							value={formData.password}
 						/>
 					</label>
-					<button className='btn rounded-full btn-primary text-white'>
+
+					<button className='btn rounded-full btn-primary text-white' disabled={isPending}>
 						{isPending ? "Loading..." : "Sign up"}
 					</button>
+
 					{isError && <p className='text-red-500'>{error.message}</p>}
 				</form>
+
 				<div className='flex flex-col lg:w-2/3 gap-2 mt-4'>
 					<p className='text-white text-lg'>Already have an account?</p>
 					<Link to='/login'>
@@ -129,4 +141,5 @@ const SignUpPage = () => {
 		</div>
 	);
 };
+
 export default SignUpPage;
